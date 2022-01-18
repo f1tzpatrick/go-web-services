@@ -45,3 +45,7 @@ GET http://localhost:5000/api/products/191
 ###
 
 DELETE http://localhost:5000/api/products/191
+
+###
+
+GET http://localhost:5000/api/receipts

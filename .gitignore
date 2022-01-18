@@ -3,3 +3,5 @@ course-materials/
 .DS_Store
 
 .vscode
+
+backend/webservice/uploads/*
