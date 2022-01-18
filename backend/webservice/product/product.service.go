@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,24 +15,37 @@ import (
 const productsBasePath = "products"
 
 func SetupRoutes(apiBasePath string) {
-	handleProduct := http.HandlerFunc(productHandler)
-	handleProducts := http.HandlerFunc(productsHandler)
+	productHandler := http.HandlerFunc(handleProduct)
+	productsHandler := http.HandlerFunc(handleProducts)
 
-	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), cors.Middleware(handleProducts))
-	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, productsBasePath), cors.Middleware(handleProduct))
+	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, productsBasePath), cors.Middleware(productHandler))
+	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), cors.Middleware(productsHandler))
 }
 
-func productHandler(w http.ResponseWriter, r *http.Request) {
+func handleProduct(w http.ResponseWriter, r *http.Request) {
 
-	urlPathSegments := strings.Split(r.URL.Path, "products/")
-	productID, err := strconv.Atoi(urlPathSegments[len(urlPathSegments)-1])
-
-	if err != nil {
+	urlPathSegments := strings.Split(r.URL.Path, fmt.Sprintf("%s/", productsBasePath))
+	if len(urlPathSegments[1:]) > 1 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	product := getProduct(productID)
+	productID, err := strconv.Atoi(urlPathSegments[len(urlPathSegments)-1])
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	product, err := getProduct(productID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if product == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	switch r.Method {
 	case http.MethodGet:
@@ -63,7 +77,13 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		addOrUpdateProduct(updatedProduct)
+		err = updateProduct(updatedProduct)
+		if err != nil {
+			log.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 		return
 	case http.MethodDelete:
@@ -76,10 +96,14 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func productsHandler(w http.ResponseWriter, r *http.Request) {
-	productList := getProductList()
+func handleProducts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		productList, err := getProductList()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		productJson, err := json.Marshal(productList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -102,13 +126,15 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = addOrUpdateProduct(newProduct)
+		productID, err := insertProduct(newProduct)
 		if err != nil {
+			log.Print(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(fmt.Sprintf(`{"productId":%d}`, productID)))
 		return
 	case http.MethodOptions:
 		return
