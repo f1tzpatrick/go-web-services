@@ -1,0 +1,47 @@
+OPTIONS http://localhost:5000/api/products
+
+###
+
+GET http://localhost:5000/api/products
+
+###
+
+GET http://localhost:5000/api/products/1
+
+###
+
+PUT http://localhost:5000/api/products/1
+content-type: application/json
+
+{
+    "productId": 1,
+    "manufacturer": "Johns-Jenkins",
+    "sku": "p5z343vdS",
+    "upc": "939581000000",
+    "pricePerUnit": "497.45",
+    "quantityOnHand": 0,
+    "productName": "sticky note"
+}
+
+###
+
+POST http://localhost:5000/api/products
+content-type: application/json
+
+{
+    "productId": 0,
+    "manufacturer": "Hello World Industries",
+    "sku": "1bd6a2c9-ef6b-51a7-8932-1bc5b0dcee6c",
+    "upc": "5674127452",
+    "pricePerUnit": "10000000.00",
+    "quantityOnHand": 1,
+    "productName": "My NFT (lol)"
+}
+
+###
+
+GET http://localhost:5000/api/products/191
+
+###
+
+DELETE http://localhost:5000/api/products/191
