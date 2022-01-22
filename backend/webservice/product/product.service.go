@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/pluralsight/inventoryservice/cors"
+	"golang.org/x/net/websocket"
 )
 
 const productsBasePath = "products"
@@ -20,6 +21,7 @@ func SetupRoutes(apiBasePath string) {
 
 	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, productsBasePath), cors.Middleware(productHandler))
 	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, productsBasePath), cors.Middleware(productsHandler))
+	http.Handle("/websocket", websocket.Handler(productSocket))
 }
 
 func handleProduct(w http.ResponseWriter, r *http.Request) {
